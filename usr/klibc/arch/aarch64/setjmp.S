@@ -27,9 +27,10 @@
 	.globl setjmp
 	.type setjmp, #function
 setjmp:
-	str [x0], x4
-	add x0, x0, #8     : add numeric 8 to register x0, store result in x0
-	str [x0], x5
+#	str [x0], x4
+#	add x0, x0, #8     : add numeric 8 to register x0, store result in x0
+#	str [x0], x5
+	stmia x0, {x4-x5}
 #	stmia	x0, {x4, x5, x6, x7, x8, x9, x10, fp, sp, lr}
 	mov	x0, #0
 	BX(lr)
