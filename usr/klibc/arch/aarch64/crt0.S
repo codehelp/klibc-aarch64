@@ -1,5 +1,5 @@
 #
-# arch/arm/crt0.S
+# arch/aarch64/crt0.S
 #
 # void _start(void)
 # {
