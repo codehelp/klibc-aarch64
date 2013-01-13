@@ -1,13 +1,7 @@
 #
-# klibc files for arm
+# klibc files for aarch64
 #
 
-klib-y := setjmp.o syscall.o vfork.o aeabi_nonsense.o
-
-klib-y += ../../libgcc/__udivmodsi4.o ../../libgcc/__divdi3.o
-klib-y += ../../libgcc/__moddi3.o     ../../libgcc/__udivdi3.o
-klib-y += ../../libgcc/__umoddi3.o    ../../libgcc/__udivmoddi4.o
-klib-y += ../../libgcc/__clzsi2.o
-
+klib-y := setjmp.o
 always  := crt0.o
 targets := crt0.o

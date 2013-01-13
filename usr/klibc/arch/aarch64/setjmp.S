@@ -1,7 +1,7 @@
 #
-# arch/arm/setjmp.S
+# arch/aarch64/setjmp.S
 #
-# setjmp/longjmp for the ARM architecture
+# setjmp/longjmp for the AARCH64 architecture
 #
 
 #include <klibc/asmmacros.h>
