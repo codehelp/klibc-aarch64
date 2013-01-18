@@ -1,0 +1,414 @@
+Description: Add aarch64 support to the klibc assembly.
+Author: Neil Williams <codehelp@debian.org>
+Bug-Debian: http://bugs.debian.org/698018
+
+---
+
+--- /dev/null
++++ klibc-2.0.1/README.md
+@@ -0,0 +1,26 @@
++klibc-aarch64
++=============
++
++klibc experiments for AARCH64
++
++work-in-progress! Lots of changes likely before this
++can be expected to actually work. The main AArch64
++assembly now compiles and needs testing.
++
++Starting with the current klibc sources as per Debian unstable,
++this repository tracks the changes needed for AARCH64 (arm64)
++support within klibc assembly and the build system.
++
++Testing with gcc-linaro-aarch64-linux-gnu-4.7+svn191987-20120925+bzr2498_linux.tar.xz
++(which needs some adjustment to complete the full build.)
++
++DEB_BUILD_MAINT_OPTIONS="hardening=-stackprotector" dpkg-architecture -aarm64 -c debian/rules build
++
++Other resources:
++ARM IHI 0042E : Procedure Call Standard for the ARM Architecture
++PRD03-GENC-010197 15.0 : ARMv8 Instruction Set Overview
++http://linux.codehelp.co.uk/serendipity/
++
++Neil Williams <codehelp@debian.org>
++Andy Simpkins <andy-debian@koipond.org>
++Steve McIntyre <steve@einval.com>
+--- /dev/null
++++ klibc-2.0.1/usr/include/arch/aarch64/klibc/asmmacros.h
+@@ -0,0 +1,11 @@
++/*
++ * usr/include/arch/arm/klibc/asmmacros.h
++ *
++ * Assembly macros used by ARM system call stubs
++ */
++
++#ifndef _KLIBC_ASMMACROS_H
++#define _KLIBC_ASMMACROS_H
++
++
++#endif /* _KLIBC_ASMMACROS_H */
+--- /dev/null
++++ klibc-2.0.1/usr/include/arch/aarch64/klibc/archconfig.h
+@@ -0,0 +1,15 @@
++/*
++ * include/arch/aarch64/klibc/archconfig.h
++ *
++ * See include/klibc/sysconfig.h for the options that can be set in
++ * this file.
++ *
++ */
++
++#ifndef _KLIBC_ARCHCONFIG_H
++#define _KLIBC_ARCHCONFIG_H
++
++/* Use rt_* signals */
++#define _KLIBC_USE_RT_SIG 1
++
++#endif				/* _KLIBC_ARCHCONFIG_H */
+--- /dev/null
++++ klibc-2.0.1/usr/include/arch/aarch64/klibc/archsignal.h
+@@ -0,0 +1,122 @@
++/*
++ * arch/arm/include/klibc/archsignal.h
++ *
++ * Architecture-specific signal definitions
++ *
++ */
++
++#ifndef _KLIBC_ARCHSIGNAL_H
++#define _KLIBC_ARCHSIGNAL_H
++
++/* The in-kernel headers for arm still have libc5
++   crap in them.  Reconsider using <asm/signal.h>
++   when/if it gets cleaned up; for now, duplicate
++   the definitions here. */
++
++#define _NSIG           64
++#define _NSIG_BPW       32
++#define _NSIG_WORDS     (_NSIG / _NSIG_BPW)
++
++typedef struct {
++	unsigned long sig[_NSIG_WORDS];
++} sigset_t;
++
++#define SIGHUP		 1
++#define SIGINT		 2
++#define SIGQUIT		 3
++#define SIGILL		 4
++#define SIGTRAP		 5
++#define SIGABRT		 6
++#define SIGIOT		 6
++#define SIGBUS		 7
++#define SIGFPE		 8
++#define SIGKILL		 9
++#define SIGUSR1		10
++#define SIGSEGV		11
++#define SIGUSR2		12
++#define SIGPIPE		13
++#define SIGALRM		14
++#define SIGTERM		15
++#define SIGSTKFLT	16
++#define SIGCHLD		17
++#define SIGCONT		18
++#define SIGSTOP		19
++#define SIGTSTP		20
++#define SIGTTIN		21
++#define SIGTTOU		22
++#define SIGURG		23
++#define SIGXCPU		24
++#define SIGXFSZ		25
++#define SIGVTALRM	26
++#define SIGPROF		27
++#define SIGWINCH	28
++#define SIGIO		29
++#define SIGPOLL		SIGIO
++/*
++#define SIGLOST		29
++*/
++#define SIGPWR		30
++#define SIGSYS		31
++#define	SIGUNUSED	31
++
++/* These should not be considered constants from userland.  */
++#define SIGRTMIN	32
++#define SIGRTMAX	_NSIG
++
++#define SIGSWI		32
++
++/*
++ * SA_FLAGS values:
++ *
++ * SA_NOCLDSTOP		flag to turn off SIGCHLD when children stop.
++ * SA_NOCLDWAIT		flag on SIGCHLD to inhibit zombies.
++ * SA_SIGINFO		deliver the signal with SIGINFO structs
++ * SA_THIRTYTWO		delivers the signal in 32-bit mode, even if the task
++ *			is running in 26-bit.
++ * SA_ONSTACK		allows alternate signal stacks (see sigaltstack(2)).
++ * SA_RESTART		flag to get restarting signals (which were the default long ago)
++ * SA_NODEFER		prevents the current signal from being masked in the handler.
++ * SA_RESETHAND		clears the handler when the signal is delivered.
++ *
++ * SA_ONESHOT and SA_NOMASK are the historical Linux names for the Single
++ * Unix names RESETHAND and NODEFER respectively.
++ */
++#define SA_NOCLDSTOP	0x00000001
++#define SA_NOCLDWAIT	0x00000002
++#define SA_SIGINFO	0x00000004
++#define SA_THIRTYTWO	0x02000000
++#define SA_RESTORER	0x04000000
++#define SA_ONSTACK	0x08000000
++#define SA_RESTART	0x10000000
++#define SA_NODEFER	0x40000000
++#define SA_RESETHAND	0x80000000
++
++#define SA_NOMASK	SA_NODEFER
++#define SA_ONESHOT	SA_RESETHAND
++
++
++/*
++ * sigaltstack controls
++ */
++#define SS_ONSTACK	1
++#define SS_DISABLE	2
++
++#define MINSIGSTKSZ	2048
++#define SIGSTKSZ	8192
++
++#include <asm-generic/signal-defs.h>
++
++/* This uses gcc anonymous union support... */
++struct siginfo;
++
++struct sigaction {
++	union {
++		__sighandler_t sa_handler;
++		void (*sa_sigaction)(int, struct siginfo *, void *);
++	};
++	unsigned long	sa_flags;
++	__sigrestore_t 	sa_restorer;
++	sigset_t	sa_mask;
++};
++
++#endif
+--- /dev/null
++++ klibc-2.0.1/usr/include/arch/aarch64/klibc/archsetjmp.h
+@@ -0,0 +1,19 @@
++/*
++ * arch/i386/include/klibc/archsetjmp.h
++ */
++
++#ifndef _KLIBC_ARCHSETJMP_H
++#define _KLIBC_ARCHSETJMP_H
++
++/* 0-7 are temporary, starting at x8, skip x16, go up to x30
++also store the d registers, d8 to d15.
++*/
++
++struct __jmp_buf {
++	uint64_t __gregs[22];
++	uint64_t __fpregs[8];
++};
++
++typedef struct __jmp_buf jmp_buf[1];
++
++#endif				/* _SETJMP_H */
+--- /dev/null
++++ klibc-2.0.1/usr/include/arch/aarch64/klibc/archstat.h
+@@ -0,0 +1,40 @@
++#ifndef _KLIBC_ARCHSTAT_H
++#define _KLIBC_ARCHSTAT_H
++
++#include <klibc/stathelp.h>
++
++#define _STATBUF_ST_NSEC
++
++/* This matches struct stat64 in glibc2.1, hence the absolutely
++ * insane amounts of padding around dev_t's.
++ * Note: The kernel zero's the padded region because glibc might read them
++ * in the hope that the kernel has stretched to using larger sizes.
++ */
++
++struct stat {
++	__stdev64	(st_dev);
++	unsigned char   __pad0[4];
++
++	unsigned long	__st_ino;
++	unsigned int	st_mode;
++	unsigned int	st_nlink;
++
++	unsigned long	st_uid;
++	unsigned long	st_gid;
++
++	__stdev64	(st_rdev);
++	unsigned char   __pad3[4];
++
++	long long	st_size;
++	unsigned long	st_blksize;
++
++	unsigned long long  st_blocks;	/* Number 512-byte blocks allocated. */
++
++	struct timespec st_atim;
++	struct timespec st_mtim;
++	struct timespec st_ctim;
++
++	unsigned long long	st_ino;
++};
++
++#endif
+--- /dev/null
++++ klibc-2.0.1/usr/klibc/arch/aarch64/sysstub.ph
+@@ -0,0 +1,29 @@
++# -*- perl -*-
++#
++# arch/aarch64/sysstub.ph
++#
++# Script to generate system call stubs
++#
++
++sub make_sysstub($$$$$@) {
++    my($outputdir, $fname, $type, $sname, $stype, @args) = @_;
++
++    open(OUT, '>', "${outputdir}/${fname}.S");
++    print  OUT "#include <asm/unistd.h>\n";
++    print  OUT "#include <klibc/asmmacros.h>\n";
++    print  OUT "	.text\n";
++    print  OUT "	.type	${fname}, #function\n";
++    print  OUT "	.globl	${fname}\n";
++    print  out "	.balign	8\n";
++    print  OUT "${fname}:\n";
++    print  OUT "	mov x0,__NR_${sname}\n";
++    print  OUT "	svc	0\n";
++    print  OUT "	.word	__NR_${sname}\n";
++    print  OUT "	.size	${fname},.-${fname}\n";
++# branch if not set
++#    print  OUT "	b .__syscall_error\n";
++#    print  OUT "	.size .${fname},.-.${fname}\n";
++
++}
++
++1;
+--- /dev/null
++++ klibc-2.0.1/usr/klibc/arch/aarch64/crt0.S
+@@ -0,0 +1,18 @@
++#
++# arch/aarch64/crt0.S
++#
++# void _start(void)
++# {
++#    __libc_init(elf_structure, atexit_ptr);
++# }
++#
++
++	.text
++	.balign 8
++	.type _start,#function
++	.globl _start
++
++_start: mov x0, sp
++	mov	x1, #0
++	bl	__libc_init
++	.size _start,.-_start
+--- /dev/null
++++ klibc-2.0.1/usr/klibc/arch/aarch64/klib.list
+@@ -0,0 +1 @@
++usr/klibc/arch/aarch64/setjmp.o
+--- /dev/null
++++ klibc-2.0.1/usr/klibc/arch/aarch64/Kbuild
+@@ -0,0 +1,7 @@
++#
++# klibc files for aarch64
++#
++
++klib-y := setjmp.o
++always  := crt0.o
++targets := crt0.o
+--- /dev/null
++++ klibc-2.0.1/usr/klibc/arch/aarch64/MCONFIG
+@@ -0,0 +1,23 @@
++# -*- makefile -*-
++#
++# arch/aarch64/MCONFIG
++#
++# Special rules for this architecture.  Note that this is actually
++# included from the main Makefile, and that pathnames should be
++# accordingly.
++#
++
++CPU_ARCH ?= armv8-a 
++CPU_TUNE ?= generic
++
++KLIBCOPTFLAGS += -Os -march=$(CPU_ARCH) -mtune=$(CPU_TUNE)
++KLIBCBITSIZE  = 64
++KLIBCREQFLAGS += -fno-exceptions
++#KLIBCSTRIPFLAGS += -R .ARM.exidx
++
++# Extra linkflags when building the shared version of the library
++# This address needs to be reachable using normal inter-module
++# calls, and work on the memory models for this architecture
++#KLIBCSHAREDFLAGS = -Ttext 0x01800200
++#KLIBCREQFLAGS +=
++#KLIBCOPTFLAGS += -mgeneral-regs-only
+--- /dev/null
++++ klibc-2.0.1/usr/klibc/arch/aarch64/setjmp.S
+@@ -0,0 +1,61 @@
++#
++# arch/aarch64/setjmp.S
++#
++# setjmp/longjmp for the AARCH64 architecture
++#
++
++#include <klibc/asmmacros.h>
++
++	.text
++	.balign 8
++	.globl setjmp
++	.type setjmp, #function
++setjmp:
++	// x0-x7 are temporary, possibly skip x16
++	// glibc stores only x19 to x30, this may need to be clarified.
++	// also store the d registers, same as glibc
++	stp	x8, x9,   [x0, #0]
++	stp	x10, x11, [x0, #16]
++	stp	x12, x13, [x0, #32]
++	stp	x14, x15, [x0, #48]
++	stp	x17, x18, [x0, #64]
++	stp	x19, x20, [x0, #80]
++	stp	x21, x22, [x0, #96]
++	stp	x23, x24, [x0, #112]
++	stp	x25, x26, [x0, #128]
++	stp	x27, x28, [x0, #144]
++	stp	x29, x30, [x0, #160]
++	stp	d8, d9,   [x0, #176]
++	stp	d10, d11, [x0, #192]
++	stp	d12, d13, [x0, #208]
++	stp	d14, d15, [x0, #224]
++	mov x0, #0 			// set the return value of setjmp
++	br x30
++	.size setjmp,.-setjmp
++
++	.text
++	.balign 8
++	.globl longjmp
++	.type longjmp, #function
++longjmp:
++	ldp x8, x9,   [x0, #0]
++	ldp x10, x11, [x0, #16]
++	ldp x12, x13, [x0, #32]
++	ldp x14, x15, [x0, #48]
++	ldp x17, x18, [x0, #64]
++	ldp x19, x20, [x0, #80]
++	ldp x21, x22, [x0, #96]
++	ldp x23, x24, [x0, #112]
++	ldp x25, x26, [x0, #128]
++	ldp x27, x28, [x0, #144]
++	ldp x29, x30, [x0, #160]
++	ldp	d8, d9,   [x0, #176]
++	ldp	d10, d11, [x0, #192]
++	ldp	d12, d13, [x0, #208]
++	ldp	d14, d15, [x0, #224]
++	mov x0, x1
++	cbnz x1, 1f // if x1 is not zero, branch to 1:
++	mov x0, #1
++1:
++	br x30
++	.size longjmp,.-longjmp
