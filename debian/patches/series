@@ -10,3 +10,4 @@ Fix-minimal-mv-to-work-across-fs
 0001-klibc-PATCH-fix-ARM-longjmp-with-zero-val.patch
 aarch64.patch
 upstream-nlink_t.patch
+FD_SETSIZE
