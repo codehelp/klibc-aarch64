@@ -214,14 +214,13 @@ Bug-Debian: http://bugs.debian.org/698018
 +#endif				/* _SETJMP_H */
 --- /dev/null
 +++ b/usr/include/arch/aarch64/klibc/archstat.h
-@@ -0,0 +1,28 @@
+@@ -0,0 +1,26 @@
 +#ifndef _KLIBC_ARCHSTAT_H
 +#define _KLIBC_ARCHSTAT_H
 +
 +#include <klibc/stathelp.h>
 +
 +#define _STATBUF_ST_NSEC
-+
 +
 +struct stat {
 +	__stdev64	(st_dev);
@@ -241,7 +240,6 @@ Bug-Debian: http://bugs.debian.org/698018
 +	unsigned long	__unused[3];
 +};
 +
-+#endif /* __s390x__ */
 +#endif
 --- /dev/null
 +++ b/usr/klibc/arch/aarch64/sysstub.ph
