@@ -4,7 +4,7 @@
 
 progs := chroot dd mkdir mkfifo mknod mount pivot_root umount
 progs += true false sleep ln mv nuke minips cat ls losetup
-progs += insmod uname halt kill readlink cpio sync dmesg
+progs += uname halt kill readlink cpio sync dmesg
 
 static-y := $(addprefix static/, $(progs))
 shared-y := $(addprefix shared/, $(progs))
@@ -46,8 +46,6 @@ static/minips-y     := minips.o
 shared/minips-y     := minips.o
 static/cat-y        := cat.o
 shared/cat-y        := cat.o
-static/insmod-y     := insmod.o
-shared/insmod-y     := insmod.o
 static/uname-y      := uname.o
 shared/uname-y      := uname.o
 static/halt-y       := halt.o
@@ -75,8 +73,4 @@ $(obj)/shared/reboot $(obj)/shared/poweroff: $(obj)/shared/halt
 clean-dirs := static shared
 
 # install only install the shared binaries
-ifneq (,$(filter $(ARCH),ia64 ppc64))
-install-y := $(static-y) static/reboot static/poweroff
-else
 install-y := $(shared-y) shared/reboot shared/poweroff
-endif
