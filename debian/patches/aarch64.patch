@@ -5,7 +5,7 @@ Bug-Debian: http://bugs.debian.org/698018
 ---
 
 --- /dev/null
-+++ klibc-2.0.1/README.md
++++ b/README.md
 @@ -0,0 +1,26 @@
 +klibc-aarch64
 +=============
@@ -34,7 +34,7 @@ Bug-Debian: http://bugs.debian.org/698018
 +Andy Simpkins <andy-debian@koipond.org>
 +Steve McIntyre <steve@einval.com>
 --- /dev/null
-+++ klibc-2.0.1/usr/include/arch/aarch64/klibc/asmmacros.h
++++ b/usr/include/arch/aarch64/klibc/asmmacros.h
 @@ -0,0 +1,11 @@
 +/*
 + * usr/include/arch/arm/klibc/asmmacros.h
@@ -48,7 +48,7 @@ Bug-Debian: http://bugs.debian.org/698018
 +
 +#endif /* _KLIBC_ASMMACROS_H */
 --- /dev/null
-+++ klibc-2.0.1/usr/include/arch/aarch64/klibc/archconfig.h
++++ b/usr/include/arch/aarch64/klibc/archconfig.h
 @@ -0,0 +1,15 @@
 +/*
 + * include/arch/aarch64/klibc/archconfig.h
@@ -66,7 +66,7 @@ Bug-Debian: http://bugs.debian.org/698018
 +
 +#endif				/* _KLIBC_ARCHCONFIG_H */
 --- /dev/null
-+++ klibc-2.0.1/usr/include/arch/aarch64/klibc/archsignal.h
++++ b/usr/include/arch/aarch64/klibc/archsignal.h
 @@ -0,0 +1,122 @@
 +/*
 + * arch/arm/include/klibc/archsignal.h
@@ -191,7 +191,7 @@ Bug-Debian: http://bugs.debian.org/698018
 +
 +#endif
 --- /dev/null
-+++ klibc-2.0.1/usr/include/arch/aarch64/klibc/archsetjmp.h
++++ b/usr/include/arch/aarch64/klibc/archsetjmp.h
 @@ -0,0 +1,19 @@
 +/*
 + * arch/i386/include/klibc/archsetjmp.h
@@ -213,8 +213,8 @@ Bug-Debian: http://bugs.debian.org/698018
 +
 +#endif				/* _SETJMP_H */
 --- /dev/null
-+++ klibc-2.0.1/usr/include/arch/aarch64/klibc/archstat.h
-@@ -0,0 +1,40 @@
++++ b/usr/include/arch/aarch64/klibc/archstat.h
+@@ -0,0 +1,28 @@
 +#ifndef _KLIBC_ARCHSTAT_H
 +#define _KLIBC_ARCHSTAT_H
 +
@@ -222,41 +222,29 @@ Bug-Debian: http://bugs.debian.org/698018
 +
 +#define _STATBUF_ST_NSEC
 +
-+/* This matches struct stat64 in glibc2.1, hence the absolutely
-+ * insane amounts of padding around dev_t's.
-+ * Note: The kernel zero's the padded region because glibc might read them
-+ * in the hope that the kernel has stretched to using larger sizes.
-+ */
 +
 +struct stat {
 +	__stdev64	(st_dev);
-+	unsigned char   __pad0[4];
-+
-+	unsigned long	__st_ino;
++	unsigned long	st_ino;
++	unsigned long	st_nlink;
 +	unsigned int	st_mode;
-+	unsigned int	st_nlink;
-+
-+	unsigned long	st_uid;
-+	unsigned long	st_gid;
-+
++	unsigned int	st_uid;
++	unsigned int	st_gid;
++	unsigned int	__pad1;
 +	__stdev64	(st_rdev);
-+	unsigned char   __pad3[4];
-+
-+	long long	st_size;
++	unsigned long	st_size;
++	struct timespec	st_atim;
++	struct timespec	st_mtim;
++	struct timespec	st_ctim;
 +	unsigned long	st_blksize;
-+
-+	unsigned long long  st_blocks;	/* Number 512-byte blocks allocated. */
-+
-+	struct timespec st_atim;
-+	struct timespec st_mtim;
-+	struct timespec st_ctim;
-+
-+	unsigned long long	st_ino;
++	long		st_blocks;
++	unsigned long	__unused[3];
 +};
 +
++#endif /* __s390x__ */
 +#endif
 --- /dev/null
-+++ klibc-2.0.1/usr/klibc/arch/aarch64/sysstub.ph
++++ b/usr/klibc/arch/aarch64/sysstub.ph
 @@ -0,0 +1,29 @@
 +# -*- perl -*-
 +#
@@ -288,7 +276,7 @@ Bug-Debian: http://bugs.debian.org/698018
 +
 +1;
 --- /dev/null
-+++ klibc-2.0.1/usr/klibc/arch/aarch64/crt0.S
++++ b/usr/klibc/arch/aarch64/crt0.S
 @@ -0,0 +1,18 @@
 +#
 +# arch/aarch64/crt0.S
@@ -309,11 +297,11 @@ Bug-Debian: http://bugs.debian.org/698018
 +	bl	__libc_init
 +	.size _start,.-_start
 --- /dev/null
-+++ klibc-2.0.1/usr/klibc/arch/aarch64/klib.list
++++ b/usr/klibc/arch/aarch64/klib.list
 @@ -0,0 +1 @@
 +usr/klibc/arch/aarch64/setjmp.o
 --- /dev/null
-+++ klibc-2.0.1/usr/klibc/arch/aarch64/Kbuild
++++ b/usr/klibc/arch/aarch64/Kbuild
 @@ -0,0 +1,7 @@
 +#
 +# klibc files for aarch64
@@ -323,8 +311,8 @@ Bug-Debian: http://bugs.debian.org/698018
 +always  := crt0.o
 +targets := crt0.o
 --- /dev/null
-+++ klibc-2.0.1/usr/klibc/arch/aarch64/MCONFIG
-@@ -0,0 +1,23 @@
++++ b/usr/klibc/arch/aarch64/MCONFIG
+@@ -0,0 +1,24 @@
 +# -*- makefile -*-
 +#
 +# arch/aarch64/MCONFIG
@@ -334,7 +322,7 @@ Bug-Debian: http://bugs.debian.org/698018
 +# accordingly.
 +#
 +
-+CPU_ARCH ?= armv8-a 
++CPU_ARCH ?= armv8-a
 +CPU_TUNE ?= generic
 +
 +KLIBCOPTFLAGS += -Os -march=$(CPU_ARCH) -mtune=$(CPU_TUNE)
@@ -348,8 +336,9 @@ Bug-Debian: http://bugs.debian.org/698018
 +#KLIBCSHAREDFLAGS = -Ttext 0x01800200
 +#KLIBCREQFLAGS +=
 +#KLIBCOPTFLAGS += -mgeneral-regs-only
++
 --- /dev/null
-+++ klibc-2.0.1/usr/klibc/arch/aarch64/setjmp.S
++++ b/usr/klibc/arch/aarch64/setjmp.S
 @@ -0,0 +1,61 @@
 +#
 +# arch/aarch64/setjmp.S
