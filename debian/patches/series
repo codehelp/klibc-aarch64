@@ -11,3 +11,4 @@ Fix-minimal-mv-to-work-across-fs
 aarch64.patch
 upstream-nlink_t.patch
 FD_SETSIZE
+SYSCALLS.def-aarch64.diff
