@@ -197,7 +197,7 @@ Bug-Debian: http://bugs.debian.org/698018
 +# klibc files for aarch64
 +#
 +
-+klib-y := setjmp.o
++klib-y := setjmp.o dup2.o
 +always  := crt0.o
 +targets := crt0.o
 --- /dev/null
@@ -291,3 +291,11 @@ Bug-Debian: http://bugs.debian.org/698018
 +1:
 +	br x30
 +	.size longjmp,.-longjmp
+--- /dev/null
++++ b/usr/klibc/arch/aarch64/dup2.c
+@@ -0,0 +1,5 @@
++#include <unistd.h>
++
++int dup2 (int fd, int fd2) {
++	return dup3 (fd, fd2, 0);
++}
