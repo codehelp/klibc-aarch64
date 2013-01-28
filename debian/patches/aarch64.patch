@@ -189,7 +189,7 @@ Bug-Debian: http://bugs.debian.org/698018
 --- /dev/null
 +++ b/usr/klibc/arch/aarch64/klib.list
 @@ -0,0 +1 @@
-+usr/klibc/arch/aarch64/setjmp.o
++usr/klibc/arch/aarch64/setjmp.o usr/klibc/arch/aarch64/dup2.o usr/klibc/arch/aarch64/unlink.o usr/klibc/arch/aarch64/rmdir.o
 --- /dev/null
 +++ b/usr/klibc/arch/aarch64/Kbuild
 @@ -0,0 +1,7 @@
@@ -197,7 +197,7 @@ Bug-Debian: http://bugs.debian.org/698018
 +# klibc files for aarch64
 +#
 +
-+klib-y := setjmp.o dup2.o
++klib-y := setjmp.o dup2.o unlink.o rmdir.o
 +always  := crt0.o
 +targets := crt0.o
 --- /dev/null
@@ -299,3 +299,23 @@ Bug-Debian: http://bugs.debian.org/698018
 +int dup2 (int fd, int fd2) {
 +	return dup3 (fd, fd2, 0);
 +}
+--- /dev/null
++++ b/usr/klibc/arch/aarch64/unlink.c
+@@ -0,0 +1,7 @@
++#include <fcntl.h>
++#include <unistd.h>
++
++int unlink(const char *pathname) {
++	return unlinkat (AT_FDCWD, pathname, 0);
++}
++
+--- /dev/null
++++ b/usr/klibc/arch/aarch64/rmdir.c
+@@ -0,0 +1,7 @@
++#include <fcntl.h>
++#include <unistd.h>
++
++int rmdir(const char *pathname) {
++	return unlinkat (AT_FDCWD, pathname, AT_REMOVEDIR);
++}
++
