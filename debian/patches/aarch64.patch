@@ -189,7 +189,7 @@ Bug-Debian: http://bugs.debian.org/698018
 --- /dev/null
 +++ b/usr/klibc/arch/aarch64/klib.list
 @@ -0,0 +1 @@
-+usr/klibc/arch/aarch64/setjmp.o usr/klibc/arch/aarch64/dup2.o usr/klibc/arch/aarch64/unlink.o usr/klibc/arch/aarch64/rmdir.o usr/klibc/arch/aarch64/utimes.o usr/klibc/arch/aarch64/fork.o usr/klibc/arch/aarch64/open.o usr/klibc/arch/aarch64/select.c
++usr/klibc/arch/aarch64/setjmp.o usr/klibc/arch/aarch64/dup2.o usr/klibc/arch/aarch64/unlink.o usr/klibc/arch/aarch64/rmdir.o usr/klibc/arch/aarch64/utimes.o usr/klibc/arch/aarch64/fork.o usr/klibc/arch/aarch64/open.o usr/klibc/arch/aarch64/select.o usr/klibc/arch/aarch64/poll.o
 --- /dev/null
 +++ b/usr/klibc/arch/aarch64/Kbuild
 @@ -0,0 +1,7 @@
@@ -197,7 +197,7 @@ Bug-Debian: http://bugs.debian.org/698018
 +# klibc files for aarch64
 +#
 +
-+klib-y := setjmp.o dup2.o unlink.o rmdir.o utimes.o fork.o open.o select.o
++klib-y := setjmp.o dup2.o unlink.o rmdir.o utimes.o fork.o open.o select.o poll.o
 +always  := crt0.o
 +targets := crt0.o
 --- /dev/null
@@ -503,3 +503,24 @@ Bug-Debian: http://bugs.debian.org/698018
 +	}
 +	return result;
 +}
+--- /dev/null
++++ b/usr/klibc/arch/aarch64/poll.c
+@@ -0,0 +1,18 @@
++#include <errno.h>
++#include <sys/poll.h>
++#include <sys/syscall.h>
++
++int poll (struct pollfd *fds, nfds_t nfds, long timeout) {
++	struct timespec timeout_ts;
++	struct timespec *timeout_ts_p = NULL;
++
++	if (timeout >= 0) {
++		timeout_ts.tv_sec = timeout / 1000;
++		timeout_ts.tv_nsec = (timeout % 1000) * 1000000;
++		timeout_ts_p = &timeout_ts;
++	}
++	return ppoll (fds, nfds, timeout_ts_p, 0);
++}
++
++//int poll(struct pollfd *, nfds_t, long);
++//int ppoll(struct pollfd *, nfds_t, struct timespec *,  const sigset_t *);
