@@ -189,7 +189,7 @@ Bug-Debian: http://bugs.debian.org/698018
 --- /dev/null
 +++ b/usr/klibc/arch/aarch64/klib.list
 @@ -0,0 +1 @@
-+usr/klibc/arch/aarch64/setjmp.o usr/klibc/arch/aarch64/dup2.o usr/klibc/arch/aarch64/unlink.o usr/klibc/arch/aarch64/rmdir.o usr/klibc/arch/aarch64/utimes.o usr/klibc/arch/aarch64/fork.o usr/klibc/arch/aarch64/open.o
++usr/klibc/arch/aarch64/setjmp.o usr/klibc/arch/aarch64/dup2.o usr/klibc/arch/aarch64/unlink.o usr/klibc/arch/aarch64/rmdir.o usr/klibc/arch/aarch64/utimes.o usr/klibc/arch/aarch64/fork.o usr/klibc/arch/aarch64/open.o usr/klibc/arch/aarch64/select.c
 --- /dev/null
 +++ b/usr/klibc/arch/aarch64/Kbuild
 @@ -0,0 +1,7 @@
@@ -197,7 +197,7 @@ Bug-Debian: http://bugs.debian.org/698018
 +# klibc files for aarch64
 +#
 +
-+klib-y := setjmp.o dup2.o unlink.o rmdir.o utimes.o fork.o open.o
++klib-y := setjmp.o dup2.o unlink.o rmdir.o utimes.o fork.o open.o select.o
 +always  := crt0.o
 +targets := crt0.o
 --- /dev/null
@@ -479,3 +479,27 @@ Bug-Debian: http://bugs.debian.org/698018
 +	return openat(AT_FDCWD, pathname, flags, mode);
 +}
 +
+--- /dev/null
++++ b/usr/klibc/arch/aarch64/select.c
+@@ -0,0 +1,21 @@
++#include <sys/time.h>
++#include <sys/types.h>
++#include <sys/select.h>
++#include <errno.h>
++//#include <sysdep-cancel.h>
++
++int select(int nfds, fd_set *readfds, fd_set *writefds,
++			fd_set *exceptfds, struct timeval *timeout) {
++	int result;
++	struct timespec ts;
++	if (timeout) {
++		ts.tv_sec = timeout->tv_sec;
++		ts.tv_nsec = timeout->tv_usec * 1000;
++	}
++	result = __pselect6 (nfds, readfds, writefds, exceptfds, &ts, NULL);
++	if (timeout) {
++		ts.tv_sec = timeout->tv_sec;
++		ts.tv_nsec = timeout->tv_usec * 1000;
++	}
++	return result;
++}
