@@ -189,15 +189,16 @@ Bug-Debian: http://bugs.debian.org/698018
 --- /dev/null
 +++ b/usr/klibc/arch/aarch64/klib.list
 @@ -0,0 +1 @@
-+usr/klibc/arch/aarch64/setjmp.o usr/klibc/arch/aarch64/dup2.o usr/klibc/arch/aarch64/unlink.o usr/klibc/arch/aarch64/rmdir.o usr/klibc/arch/aarch64/utimes.o usr/klibc/arch/aarch64/fork.o usr/klibc/arch/aarch64/open.o usr/klibc/arch/aarch64/select.o usr/klibc/arch/aarch64/poll.o
++usr/klibc/arch/aarch64/setjmp.o usr/klibc/arch/aarch64/dup2.o usr/klibc/arch/aarch64/unlink.o usr/klibc/arch/aarch64/rmdir.o usr/klibc/arch/aarch64/utimes.o usr/klibc/arch/aarch64/fork.o usr/klibc/arch/aarch64/open.o usr/klibc/arch/aarch64/select.o usr/klibc/arch/aarch64/poll.o usr/klibc/arch/aarch64/stat.o usr/klibc/arch/aarch64/lstat.o usr/klibc/arch/aarch64/mkdir.o usr/klibc/arch/aarch64/access.o usr/klibc/arch/aarch64/mknod.o
 --- /dev/null
 +++ b/usr/klibc/arch/aarch64/Kbuild
-@@ -0,0 +1,7 @@
+@@ -0,0 +1,8 @@
 +#
 +# klibc files for aarch64
 +#
 +
-+klib-y := setjmp.o dup2.o unlink.o rmdir.o utimes.o fork.o open.o select.o poll.o
++klib-y := setjmp.o dup2.o unlink.o rmdir.o utimes.o fork.o open.o \
++ select.o poll.o stat.o lstat.o mkdir.o access.o mknod.o
 +always  := crt0.o
 +targets := crt0.o
 --- /dev/null
@@ -464,7 +465,7 @@ Bug-Debian: http://bugs.debian.org/698018
 +#endif				/* __NR_fork */
 --- /dev/null
 +++ b/usr/klibc/arch/aarch64/open.c
-@@ -0,0 +1,14 @@
+@@ -0,0 +1,13 @@
 +/*
 + * open.c
 + *
@@ -478,7 +479,6 @@ Bug-Debian: http://bugs.debian.org/698018
 +{
 +	return openat(AT_FDCWD, pathname, flags, mode);
 +}
-+
 --- /dev/null
 +++ b/usr/klibc/arch/aarch64/select.c
 @@ -0,0 +1,21 @@
@@ -505,7 +505,7 @@ Bug-Debian: http://bugs.debian.org/698018
 +}
 --- /dev/null
 +++ b/usr/klibc/arch/aarch64/poll.c
-@@ -0,0 +1,18 @@
+@@ -0,0 +1,15 @@
 +#include <errno.h>
 +#include <sys/poll.h>
 +#include <sys/syscall.h>
@@ -521,6 +521,70 @@ Bug-Debian: http://bugs.debian.org/698018
 +	}
 +	return ppoll (fds, nfds, timeout_ts_p, 0);
 +}
+--- /dev/null
++++ b/usr/klibc/arch/aarch64/stat.c
+@@ -0,0 +1,12 @@
++#include <fcntl.h>
++#include <unistd.h>
++#include <sys/types.h>
++#include <sys/stat.h>
 +
-+//int poll(struct pollfd *, nfds_t, long);
-+//int ppoll(struct pollfd *, nfds_t, struct timespec *,  const sigset_t *);
++int stat(const char *path, struct stat *buf)
++{
++	int fd = open (path, O_RDONLY);
++	int ret = fstat (fd, buf);
++	close (fd);
++	return ret;
++}
+--- /dev/null
++++ b/usr/klibc/arch/aarch64/lstat.c
+@@ -0,0 +1,14 @@
++#include <fcntl.h>
++#include <unistd.h>
++#include <sys/types.h>
++#include <sys/stat.h>
++
++// FIXME
++
++int lstat(const char *path, struct stat *buf)
++{
++	int fd = open (path, O_RDONLY);
++	int ret = fstat (fd, buf);
++	close (fd);
++	return ret;
++}
+--- /dev/null
++++ b/usr/klibc/arch/aarch64/mkdir.c
+@@ -0,0 +1,8 @@
++#include <fcntl.h>
++#include <sys/stat.h>
++#include <sys/types.h>
++
++int mkdir(const char *pathname, mode_t mode)
++{
++	return mkdirat (AT_FDCWD, pathname, mode);
++}
+--- /dev/null
++++ b/usr/klibc/arch/aarch64/access.c
+@@ -0,0 +1,7 @@
++#include <fcntl.h>
++#include <unistd.h>
++
++int access(const char *pathname, int mode)
++{
++	return faccessat (AT_FDCWD, pathname, mode, 0);
++}
+--- /dev/null
++++ b/usr/klibc/arch/aarch64/mknod.c
+@@ -0,0 +1,11 @@
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <fcntl.h>
++#include <unistd.h>
++
++// FIXME what is the second const char * ?
++
++int mknod(const char *pathname, mode_t mode, dev_t dev)
++{
++	return mknodat(AT_FDCWD, pathname, pathname, mode, dev);
++}
