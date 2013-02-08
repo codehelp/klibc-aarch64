@@ -189,16 +189,17 @@ Bug-Debian: http://bugs.debian.org/698018
 --- /dev/null
 +++ b/usr/klibc/arch/aarch64/klib.list
 @@ -0,0 +1 @@
-+usr/klibc/arch/aarch64/setjmp.o usr/klibc/arch/aarch64/dup2.o usr/klibc/arch/aarch64/unlink.o usr/klibc/arch/aarch64/rmdir.o usr/klibc/arch/aarch64/utimes.o usr/klibc/arch/aarch64/fork.o usr/klibc/arch/aarch64/open.o usr/klibc/arch/aarch64/select.o usr/klibc/arch/aarch64/poll.o usr/klibc/arch/aarch64/stat.o usr/klibc/arch/aarch64/lstat.o usr/klibc/arch/aarch64/mkdir.o usr/klibc/arch/aarch64/access.o usr/klibc/arch/aarch64/mknod.o
++usr/klibc/arch/aarch64/setjmp.o usr/klibc/arch/aarch64/dup2.o usr/klibc/arch/aarch64/unlink.o usr/klibc/arch/aarch64/rmdir.o usr/klibc/arch/aarch64/utimes.o usr/klibc/arch/aarch64/fork.o usr/klibc/arch/aarch64/open.o usr/klibc/arch/aarch64/select.o usr/klibc/arch/aarch64/poll.o usr/klibc/arch/aarch64/stat.o usr/klibc/arch/aarch64/lstat.o usr/klibc/arch/aarch64/mkdir.o usr/klibc/arch/aarch64/access.o usr/klibc/arch/aarch64/mknod.o usr/klibc/arch/aarch64/vfork.o usr/klibc/arch/aarch64/pipe.o usr/klibc/arch/aarch64/chmod.o usr/klibc/arch/aarch64/link.o usr/klibc/arch/aarch64/symlink.o usr/klibc/arch/aarch64/rename.o usr/klibc/arch/aarch64/readlink.o usr/klibc/arch/aarch64/chown.o usr/klibc/arch/aarch64/lchown.o
 --- /dev/null
 +++ b/usr/klibc/arch/aarch64/Kbuild
-@@ -0,0 +1,8 @@
+@@ -0,0 +1,9 @@
 +#
 +# klibc files for aarch64
 +#
 +
 +klib-y := setjmp.o dup2.o unlink.o rmdir.o utimes.o fork.o open.o \
-+ select.o poll.o stat.o lstat.o mkdir.o access.o mknod.o
++ select.o poll.o stat.o lstat.o mkdir.o access.o mknod.o vfork.o pipe.o \
++ chmod.o link.o symlink.o rename.o readlink.o chown.o lchown.o
 +always  := crt0.o
 +targets := crt0.o
 --- /dev/null
@@ -587,4 +588,113 @@ Bug-Debian: http://bugs.debian.org/698018
 +int mknod(const char *pathname, mode_t mode, dev_t dev)
 +{
 +	return mknodat(AT_FDCWD, pathname, pathname, mode, dev);
++}
+--- /dev/null
++++ b/usr/klibc/arch/aarch64/vfork.S
+@@ -0,0 +1,22 @@
++/*
++ * arch/aarch64/vfork.S
++ *
++ * vfork - nasty system call which must not use the stack.
++ */
++
++#include <klibc/asmmacros.h>
++#include <asm/unistd.h>
++
++// FIXME: no save or restore PID support
++
++	.type	vfork,#function
++	.globl	vfork
++	.balign	8
++vfork:
++	mov	x0, #0x4111	/* CLONE_VM | CLONE_VFORK | SIGCHLD */
++	mov	x1, sp
++	cmn	x0, #4095
++	b.cs    1f
++	RET
++1:
++	.word	errno
+--- /dev/null
++++ b/usr/klibc/arch/aarch64/pipe.c
+@@ -0,0 +1,6 @@
++#include <unistd.h>
++
++int pipe(int pipefd[2])
++{
++	return pipe2 (pipefd, 0);
++}
+--- /dev/null
++++ b/usr/klibc/arch/aarch64/chmod.c
+@@ -0,0 +1,12 @@
++#include <fcntl.h>
++#include <unistd.h>
++#include <sys/types.h>
++#include <sys/stat.h>
++
++int chmod(const char *path, mode_t mode)
++{
++	int fd = open (path, O_RDONLY);
++	int ret = fchmod (fd, mode);
++	close (fd);
++	return ret;
++}
+--- /dev/null
++++ b/usr/klibc/arch/aarch64/link.c
+@@ -0,0 +1,7 @@
++#include <fcntl.h>
++#include <unistd.h>
++
++int link(const char *oldpath, const char *newpath)
++{
++	return linkat (AT_FDCWD, oldpath, AT_FDCWD, newpath);
++}
+--- /dev/null
++++ b/usr/klibc/arch/aarch64/symlink.c
+@@ -0,0 +1,7 @@
++#include <fcntl.h>
++#include <unistd.h>
++
++int symlink (const char *oldpath, const char *newpath)
++{
++	return symlinkat (AT_FDCWD, oldpath, newpath);
++}
+--- /dev/null
++++ b/usr/klibc/arch/aarch64/rename.c
+@@ -0,0 +1,7 @@
++#include <fcntl.h>
++#include <stdio.h>
++
++int rename(const char *oldpath, const char *newpath)
++{
++	return renameat(AT_FDCWD, oldpath, AT_FDCWD, newpath);
++}
+--- /dev/null
++++ b/usr/klibc/arch/aarch64/readlink.c
+@@ -0,0 +1,7 @@
++#include <fcntl.h>
++#include <unistd.h>
++
++int readlink(const char *path, char *buf, size_t bufsiz)
++{
++	return readlinkat(AT_FDCWD, path, buf, bufsiz);
++}
+--- /dev/null
++++ b/usr/klibc/arch/aarch64/chown.c
+@@ -0,0 +1,7 @@
++#include <fcntl.h>
++#include <unistd.h>
++
++int chown(const char *path, uid_t owner, gid_t group)
++{
++	return fchownat(AT_FDCWD, path, owner, group, 0);
++}
+--- /dev/null
++++ b/usr/klibc/arch/aarch64/lchown.c
+@@ -0,0 +1,7 @@
++#include <fcntl.h>
++#include <unistd.h>
++
++int lchown(const char *path, uid_t owner, gid_t group)
++{
++	return fchownat (AT_FDCWD, path, owner, group, AT_SYMLINK_NOFOLLOW);
 +}
