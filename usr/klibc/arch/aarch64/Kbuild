@@ -1,7 +1,0 @@
-#
-# klibc files for aarch64
-#
-
-klib-y := setjmp.o
-always  := crt0.o
-targets := crt0.o

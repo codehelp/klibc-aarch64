@@ -1,2 +1,0 @@
-debian/tmp/lib/klibc*.so
-debian/lintian/libklibc usr/share/lintian/overrides
