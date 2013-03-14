@@ -1,0 +1,9 @@
+#
+# klibc files for aarch64
+#
+
+klib-y := setjmp.o dup2.o unlink.o rmdir.o utimes.o fork.o open.o \
+ select.o poll.o stat.o lstat.o mkdir.o access.o mknod.o vfork.o pipe.o \
+ chmod.o link.o symlink.o rename.o readlink.o chown.o lchown.o
+always  := crt0.o
+targets := crt0.o
