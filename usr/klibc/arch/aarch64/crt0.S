@@ -12,7 +12,8 @@
 	.type _start,#function
 	.globl _start
 
-_start: mov x0, sp
-	mov	x1, #0
+_start:
+	stp	x29, x30, [sp, -16]!
+	mov	x29, sp
 	bl	__libc_init
 	.size _start,.-_start
